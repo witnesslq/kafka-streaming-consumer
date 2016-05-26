@@ -10,61 +10,53 @@ import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka._
 import org.apache.spark.{SparkContext, SparkConf}
 
-import scala.util.parsing.json.JSON
-import com.caishi.kafka.model._
-
 /**
- * Created by root on 15-10-12.
- * kafka consumer real time to hdfs
- */
+  * Created by root on 15-10-12.
+  * kafka consumer real time to hdfs
+  */
 object Common {
   def main(args: Array[String]): Unit = {
-    if (args.length < 8) {
-      System.err.println("Usage: Common <zkQuorum> <brokers> <topics> <timeWindow> <numRepartition> <autooffset> <groupId> <pathPre:hdfs pre >")
+    if (args.length < 7) {
+      System.err.println("Usage: Common <brokers> <topics> <timeWindow> <numRepartition> <autooffset> <groupId> <pathPre:hdfs pre >")
       System.exit(1)
     }
 
-    val Array(zkQuorum, brokers, topics, timeWindow, numRepartition,autooffset,groupId,pathPre) = args
-//    offline zk: 10.10.42.24:2181,10.10.42.25:2128,10.10.42.24:2128
-//    val zkQuorum:String = "10.4.1.221:2181,10.4.1.222:2181,10.4.1.223:2181"
-//    val zkQuorum:String = "10.10.42.24:2181,10.10.42.25:2128,10.10.42.24:2128"
-//    val brokers : String = "10.4.1.201:9092,10.4.1.202:9092,10.4.1.203:9092"
-//    val brokers = "10.10.42.24:9092,10.10.42.25:9092,10.10.42.26:9092"
-//    val topics : String = "topic_comment_event,topic_news_behavior,topic_news_social,topic_common_event,topic_scene_behavior,topic_recommendation_event,topic_personalization_event"
-//    val topics : String = "topic_common_event"
-//    val timeWindow : Int = 10
-//    val numRepartition : Int = 2
-//    val pathPre : String ="hdfs://10.4.1.4:9000/test/dw"
-//    val autooffset= "largest" //smallest
-//    val groupId = "spark-streaming-test"
-    val sparkConf = new SparkConf().setAppName("spark-log")
+    val Array(brokers, topics, timeWindow, numRepartition,autooffset,groupId,pathPre) = args
+    //    offline zk: 10.10.42.24:2181,10.10.42.25:2128,10.10.42.24:2128
+    //    val zkQuorum:String = "192.168.100.63:2181,192.168.100.64:2181,192.168.100.65:2181"
+    //    val brokers : String = "192.168.100.70:9092,192.168.100.70:9092,192.168.100.70:9092"
+    //    val topics : String = "topic-user-info,topic-user-active"
+    //    val topics : String = "topic-user-active"
+    //    val timeWindow : Int = 20
+    //    val numRepartition : Int = 2
+    //    val pathPre : String ="hdfs://192.168.100.73:9000/test/dw"
+    //    val autooffset= "largest" //smallest
+    //    val groupId = "spark-streaming-test"
+    val sparkConf = new SparkConf().setAppName("spark-streaming-log")
     sparkConf.set("spark.streaming.kafka.maxRatePerPartition","10000")
     val ssc = new StreamingContext(sparkConf, Seconds(timeWindow.toInt))
 
-//    ssc.sparkContext.setLocalProperty("spark.scheduler.pool","production")
+    //    ssc.sparkContext.setLocalProperty("spark.scheduler.pool","production")
     // Kafka configurations
     val kafkaParams = Map[String, String](
       "metadata.broker.list" -> brokers,
       "serializer.class" -> "kafka.serializer.StringEncoder",
       "group.id" -> groupId,
       "auto.offset.reset" -> autooffset
-      )
+    )
 
     // Since Spark 1.3 we can use Direct Stream
     val topicsSet = topics.split(",").toSet
-//    val tm = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, topicsSet)
+    //    val tm = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, topicsSet)
     val km = new KafkaManager(kafkaParams)
     val data = km.createDirectStream[String, String, StringDecoder, StringDecoder](ssc,kafkaParams,topicsSet)
-
-    val lines = data.repartition(numRepartition.toInt).map(_._2)
-    val commentData = lines.filter(checkDataType(_,"topic_comment_event")).map(Util.convertToJson(_,1)).foreachRDD(rdd => saveToParquet(rdd,"topic_comment_event",pathPre))
-    val newsBehaviorData = lines.filter(checkDataType(_,"topic_news_behavior")).map(Util.convertToJson(_,2)).foreachRDD(rdd => saveToParquet(rdd,"topic_news_behavior",pathPre))
-    val newsSocialData = lines.filter(checkDataType(_,"topic_news_social")).map(Util.convertToJson(_,3)).foreachRDD(rdd => saveToParquet(rdd,"topic_news_social",pathPre))
-    val commonEventData = lines.filter(checkDataType(_,"topic_common_event")).map(Util.convertToJson(_,4)).foreachRDD(rdd => saveToParquet(rdd,"topic_common_event",pathPre))
-    val sceneBehaviorData = lines.filter(checkDataType(_,"topic_scene_behavior")).map(Util.convertToJson(_,5)).foreachRDD(rdd => saveToParquet(rdd,"topic_scene_behavior",pathPre))
-    val recommendationData = lines.filter(checkDataType(_,"topic_recommendation_event")).map(Util.convertToJson(_,6)).foreachRDD(rdd => saveToParquet(rdd,"topic_recommendation_event",pathPre))
-    val chooseLikeData = lines.filter(checkDataType(_,"topic_personalization_event")).map(Util.convertToJson(_,7)).foreachRDD(rdd => saveToParquet(rdd,"topic_personalization_event",pathPre))
-//    更新kafka 监控offset值
+    // json to K/V
+    val lines = data.map(_._2)
+    lines.filter(checkDataType2(_,"topic-user-info")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-info",pathPre))
+    lines.filter(checkDataType2(_,"topic-user-active")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-active",pathPre))
+    lines.filter(checkDataType2(_,"topic-user-course-subscribe")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-course-subscribe",pathPre))
+    lines.filter(checkDataType2(_,"topic-user-workout-finished")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-workout-finished",pathPre))
+    //    更新kafka 监控offset值
     data.foreachRDD(rdd => {
       if(!rdd.isEmpty()){
         //更新zk offset
@@ -75,18 +67,26 @@ object Common {
     ssc.awaitTermination()
   }
 
-  def checkDataType(d : String,dataType:String): Boolean ={
-    val s = JSON.parseFull(d)
-    val isType:Boolean = s match {
-      case Some(map: Map[String, Any]) =>{
-        try {
-          dataType.equals(map("topic"))
-        }catch {
-          case e => false
-        }
+  def checkDataType2(d : String,dataType:String): Boolean ={
+    val s = com.alibaba.fastjson.JSON.parseObject(d).get("topic")
+    val isType = dataType.equals(s)
+    isType
+  }
+
+  def saveToParquet(rdd: RDD[String]): Unit = {
+    val sqlContext = SQLContextSingleton.getInstance(rdd.sparkContext)
+    sqlContext.setConf("parquet.enable.summary-metadata", "false")
+
+    // Loads an `JavaRDD[String]` storing JSON objects (one object per record)
+    val df = sqlContext.read.json()
+    if(df.count() > 0){
+      try {
+        df.write.format("parquet").mode(SaveMode.Append).save("hdfs://192.168.100.73:9000/test/test")
+      }catch {
+        case e: Throwable =>
+          println("ERROR: Save to parquet error\n" + e.toString + "\n" + rdd.collect())
       }
     }
-    isType
   }
 
   def saveToParquet(rdd: RDD[String], dataType: String,pathPre : String): Unit = {
@@ -95,25 +95,15 @@ object Common {
 
     // Loads an `JavaRDD[String]` storing JSON objects (one object per record)
     val df = sqlContext.read.json(rdd)
-    if(df.count() > 0){
-      val dirname = {
-        dataType match {
-          case "topic_comment_event" => dirName.getDirName(pathPre,"topic_comment_event")
-          case "topic_news_behavior" => dirName.getDirName(pathPre,"topic_news_behavior")
-          case "topic_news_social" => dirName.getDirName(pathPre,"topic_news_social")
-          case "topic_common_event" => dirName.getDirName(pathPre,"topic_common_event")
-          case "topic_scene_behavior" => dirName.getDirName(pathPre,"topic_scene_behavior")
-          case "topic_recommendation_event" => dirName.getDirName(pathPre,"topic_recommendation_event")
-          case "topic_personalization_event" => dirName.getDirName(pathPre,"topic_personalization_event")
-        }
-      }
-      try {
-        df.write.format("parquet").mode(SaveMode.Append).save(dirname)
-      }catch {
-        case e: Throwable =>
-          println("ERROR: Save to parquet error\n" + e.toString + "\n" + rdd.collect())
-      }
+    //    if(df.count() > 0){
+    val dirname = dirName.getDirName(pathPre,dataType)
+    try {
+      df.write.format("parquet").mode(SaveMode.Append).save(dirname)
+    }catch {
+      case e: Throwable =>
+        println("ERROR: Save to parquet error\n" + e.toString + "\n" + rdd.collect())
     }
+    //    }
   }
 }
 
