@@ -14,11 +14,16 @@ object Test2 {
 //
 //    println(x("auditLevel")+"\t"+x("forbiddenWordList"))
     testFastJson(data)
+    testString()
   }
 
   def testFastJson(d : String): Unit ={
     val topic = com.alibaba.fastjson.JSON.parseObject(d).get("topic")
     println(topic)
     println("topic-user-info".equals(topic))
+  }
+  def testString(): Unit ={
+    var b = """^org\.apache\.spark\.streaming\.test""".r.findFirstIn("org.apache.spark.streaming.test")
+    println(b)
   }
 }

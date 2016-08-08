@@ -58,5 +58,24 @@
       </plugin>
     </plugins>
   </build>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.9.2</artifactId>
+      <version>0.8.2.1</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>jopt-simple</artifactId>
+          <groupId>net.sf.jopt-simple</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <spark.version>1.6.0</spark.version>
+    <kafka.version>0.8.2.1</kafka.version>
+  </properties>
 </project>
 

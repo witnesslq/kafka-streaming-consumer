@@ -9,7 +9,7 @@ import org.apache.spark.sql.{SaveMode, SQLContext}
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka._
 import org.apache.spark.{SparkContext, SparkConf}
-
+import com.fitttime.kafka.model.Util
 /**
   * Created by root on 15-10-12.
   * kafka consumer real time to hdfs
@@ -22,18 +22,17 @@ object Common {
     }
 
     val Array(brokers, topics, timeWindow, numRepartition,autooffset,groupId,pathPre) = args
-    //    offline zk: 10.10.42.24:2181,10.10.42.25:2128,10.10.42.24:2128
-    //    val zkQuorum:String = "192.168.100.63:2181,192.168.100.64:2181,192.168.100.65:2181"
-    //    val brokers : String = "192.168.100.70:9092,192.168.100.70:9092,192.168.100.70:9092"
-    //    val topics : String = "topic-user-info,topic-user-active"
-    //    val topics : String = "topic-user-active"
-    //    val timeWindow : Int = 20
-    //    val numRepartition : Int = 2
-    //    val pathPre : String ="hdfs://192.168.100.73:9000/test/dw"
-    //    val autooffset= "largest" //smallest
-    //    val groupId = "spark-streaming-test"
+//        val brokers : String = "192.168.100.56:9092"
+//        val topics : String = "topic-user-browse,topic-user-openapp"
+////        val topics : String = "topic-user-active"
+//        val timeWindow : Int = 5
+//        val numRepartition : Int = 2
+//        val pathPre : String ="hdfs://192.168.100.73:9000/test/dw"
+//        val autooffset= "largest" //smallest
+//        val groupId = "spark-streaming-test-test"
     val sparkConf = new SparkConf().setAppName("spark-streaming-log")
     sparkConf.set("spark.streaming.kafka.maxRatePerPartition","10000")
+    sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     val ssc = new StreamingContext(sparkConf, Seconds(timeWindow.toInt))
 
     //    ssc.sparkContext.setLocalProperty("spark.scheduler.pool","production")
@@ -51,11 +50,25 @@ object Common {
     val km = new KafkaManager(kafkaParams)
     val data = km.createDirectStream[String, String, StringDecoder, StringDecoder](ssc,kafkaParams,topicsSet)
     // json to K/V
-    val lines = data.map(_._2)
+    val lines = data.map(_._2).filter(!"".equals(_))
     lines.filter(checkDataType2(_,"topic-user-info")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-info",pathPre))
     lines.filter(checkDataType2(_,"topic-user-active")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-active",pathPre))
     lines.filter(checkDataType2(_,"topic-user-course-subscribe")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-course-subscribe",pathPre))
+    lines.filter(checkDataType2(_,"topic-user-course-unsubscribe")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-course-unsubscribe",pathPre))
     lines.filter(checkDataType2(_,"topic-user-workout-finished")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-workout-finished",pathPre))
+    lines.filter(checkDataType2(_,"topic-user-login")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-login",pathPre))
+    lines.filter(checkDataType2(_,"topic-user-openapp")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-openapp",pathPre))
+    lines.filter(checkDataType2(_,"topic-user-quitapp")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-quitapp",pathPre))
+    lines.filter(checkDataType2(_,"topic-user-browse")).map(Util.convertToJson(_,4)).foreachRDD(rdd => saveToParquet(rdd,"topic-user-browse",pathPre))
+    lines.filter(checkDataType2(_,"topic-user-media")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-media",pathPre))
+    lines.filter(checkDataType2(_,"topic-user-course-option")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-course-option",pathPre))
+    lines.filter(checkDataType2(_,"topic-user-search")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-search",pathPre))
+
+    lines.filter(checkDataType2(_,"topic-mall-order")).map(Util.convertToJson(_,1)).foreachRDD(rdd => saveToParquet(rdd,"topic-mall-order",pathPre))
+    lines.filter(checkDataType2(_,"topic-mall-pay")).map(Util.convertToJson(_,2)).foreachRDD(rdd => saveToParquet(rdd,"topic-mall-pay",pathPre))
+    lines.filter(checkDataType2(_,"topic-mall-browse")).map(Util.convertToJson(_,3)).foreachRDD(rdd => saveToParquet(rdd,"topic-mall-browse",pathPre))
+
+//    lines.map(("",_)).groupByKey().foreachRDD()
     //    更新kafka 监控offset值
     data.foreachRDD(rdd => {
       if(!rdd.isEmpty()){
@@ -67,27 +80,30 @@ object Common {
     ssc.awaitTermination()
   }
 
+
   def checkDataType2(d : String,dataType:String): Boolean ={
     val s = com.alibaba.fastjson.JSON.parseObject(d).get("topic")
     val isType = dataType.equals(s)
     isType
   }
 
-  def saveToParquet(rdd: RDD[String]): Unit = {
-    val sqlContext = SQLContextSingleton.getInstance(rdd.sparkContext)
-    sqlContext.setConf("parquet.enable.summary-metadata", "false")
+//  def saveToParquet2(rdd: RDD[(String,Iterable[String])]): Unit = {
+//    val sqlContext = SQLContextSingleton.getInstance(rdd.sparkContext)
+//    sqlContext.setConf("parquet.enable.summary-metadata", "false")
+//
+//    // Loads an `JavaRDD[String]` storing JSON objects (one object per record)
+//    val df = sqlContext.read.json(rdd.map(it => it._2))
+//    if(df.count() > 0){
+//      val dirname = dirName.getDirName(pathPre,dataType)
+//      try {
+//        df.write.format("parquet").mode(SaveMode.Append).save(dirname)
+//      }catch {
+//        case e: Throwable =>
+//          println("ERROR: Save to parquet error\n" + e.toString + "\n" + rdd.collect())
+//      }
+//    }
+//  }
 
-    // Loads an `JavaRDD[String]` storing JSON objects (one object per record)
-    val df = sqlContext.read.json()
-    if(df.count() > 0){
-      try {
-        df.write.format("parquet").mode(SaveMode.Append).save("hdfs://192.168.100.73:9000/test/test")
-      }catch {
-        case e: Throwable =>
-          println("ERROR: Save to parquet error\n" + e.toString + "\n" + rdd.collect())
-      }
-    }
-  }
 
   def saveToParquet(rdd: RDD[String], dataType: String,pathPre : String): Unit = {
     val sqlContext = SQLContextSingleton.getInstance(rdd.sparkContext)
@@ -95,15 +111,15 @@ object Common {
 
     // Loads an `JavaRDD[String]` storing JSON objects (one object per record)
     val df = sqlContext.read.json(rdd)
-    //    if(df.count() > 0){
-    val dirname = dirName.getDirName(pathPre,dataType)
-    try {
-      df.write.format("parquet").mode(SaveMode.Append).save(dirname)
-    }catch {
-      case e: Throwable =>
-        println("ERROR: Save to parquet error\n" + e.toString + "\n" + rdd.collect())
+    if(df.count() > 0){
+      val dirname = dirName.getDirName(pathPre,dataType)
+      try {
+        df.write.format("parquet").mode(SaveMode.Append).save(dirname)
+      }catch {
+        case e: Throwable =>
+          println("ERROR: Save to parquet error\n" + e.toString + "\n" + rdd.collect())
+      }
     }
-    //    }
   }
 }
 
@@ -116,7 +132,7 @@ object dirName {
     val day = new SimpleDateFormat("dd").format(time)
     val hour = new SimpleDateFormat("HH").format(time)
     val minute = new SimpleDateFormat("mm").format(time)
-    val filename = (pathPre+"/%s/%s/%s/" + dataType + "/%s").format(year, month, day, hour)
+    val filename = (pathPre+"/%s/%s/%s/" + dataType +"/%s").format(year, month, day,hour)
     filename
   }
 }
