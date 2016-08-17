@@ -36,9 +36,12 @@ class KafkaManager (val kafkaParams: Map[String, String]) {
     setOrUpdateOffsets(topics, groupId)
 
     //从zookeeper上读取offset开始消费message
+    // 代码块
     val messages = {
       val partitionsE = kc.getPartitions(topics)
-      if (partitionsE.isLeft) throw new SparkException("get kafka partition failed:")
+
+      if (partitionsE.isLeft)
+        throw new SparkException("get kafka partition failed:")
       val partitions = partitionsE.right.get
       val consumerOffsetsE = kc.getConsumerOffsets(groupId, partitions)
       if (consumerOffsetsE.isLeft) throw new SparkException("get kafka consumer offsets failed:")

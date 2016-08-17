@@ -14,7 +14,6 @@ object Test_group {
     val topics : String = "topic_common_event"
     val numRepartition : Int = 2
 
-
     val sparkConf = new SparkConf().setAppName("KafkaWordCount").setMaster("local")
     val sc = new SparkContext(sparkConf)
     val data = sc.parallelize(List(1,1,1,4,5,5)).map(item =>(String.valueOf(item),String.valueOf(item)))
