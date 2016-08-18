@@ -13,7 +13,7 @@ import scala.reflect.ClassTag
 
 /**
  * spark使用高级api读取kafka中的数据后，更新offset到zk，用以monitor监控
- * Created by root on 15-10-23.
+ * Created by YMY on 15-10-23.
  */
 class KafkaManager (val kafkaParams: Map[String, String]) {
 
@@ -38,11 +38,13 @@ class KafkaManager (val kafkaParams: Map[String, String]) {
     //从zookeeper上读取offset开始消费message
     // 代码块
     val messages = {
+      // 根据topics获得每个topic对应的kafka partition键值对
       val partitionsE = kc.getPartitions(topics)
 
       if (partitionsE.isLeft)
         throw new SparkException("get kafka partition failed:")
       val partitions = partitionsE.right.get
+      // 获得topic的partition的offset值
       val consumerOffsetsE = kc.getConsumerOffsets(groupId, partitions)
       if (consumerOffsetsE.isLeft) throw new SparkException("get kafka consumer offsets failed:")
       val consumerOffsets = consumerOffsetsE.right.get
