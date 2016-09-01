@@ -57,13 +57,13 @@
             <version>${kafka.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.blueocn.das</groupId>
-            <artifactId>das-kafka-data-unwrap</artifactId>
-            <version>2.5.1</version>
-            <systemPath>${project.basedir}/lib/das-kafka-data-unwrap-2.5.1-SNAPSHOT.jar</systemPath>
-            <scope>system</scope>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.blueocn.das</groupId>-->
+            <!--<artifactId>das-kafka-data-unwrap</artifactId>-->
+            <!--<version>2.5.1</version>-->
+            <!--<systemPath>${project.basedir}/lib/das-kafka-data-unwrap-2.5.1-SNAPSHOT.jar</systemPath>-->
+            <!--<scope>system</scope>-->
+        <!--</dependency>-->
     </dependencies>
 
     <build>

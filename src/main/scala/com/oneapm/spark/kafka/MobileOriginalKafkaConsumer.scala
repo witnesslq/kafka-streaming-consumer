@@ -4,9 +4,6 @@ import java.util.Calendar
 import java.text.SimpleDateFormat
 
 import com.alibaba.fastjson.JSON
-import com.blueocn.das.kafa.data.unwrap.LogData
-import com.blueocn.das.web.agent.model.crashv2.AndroidCrashData
-import com.blueocn.das.web.agent.model.{MobileData, ConnectInformation}
 import kafka.serializer.StringDecoder
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming._
@@ -36,41 +33,30 @@ object MobileOriginalKafkaConsumer {
     val topicsSet = topics.split(",").toSet
     val lines = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, topicsSet)
 
-    def headerMatch(record: String, target: String): Boolean = {
-      val data = new LogData(record.toString)
-      val header = data.getHeader
-      target.equals(header.getDataType)
-    }
-
-    def getJson(record: String, classNum: Int): String = {
-      try {
-        val data = new LogData(record)
-        val body = {
-          classNum match {
-            case 1 => data.getBody(classOf[ConnectInformation])
-            case 2 => data.getBody(classOf[MobileData])
-            case 3 => data.getBody(classOf[AndroidCrashData])
-          }
-        }
-        JSON.toJSONString(body, true)
-      }
-        catch {
-        case e: Throwable =>
-          println("ERROR: Json from kakfa is broken\n" + e.toString)
-          println(record)
-          null
-      }
-    }
+//
+//    def getJson(record: String, classNum: Int): String = {
+//      try {
+//        val data = new LogData(record)
+//        val body = {
+//          classNum match {
+//            case 1 => data.getBody(classOf[ConnectInformation])
+//            case 2 => data.getBody(classOf[MobileData])
+//            case 3 => data.getBody(classOf[AndroidCrashData])
+//          }
+//        }
+//        JSON.toJSONString(body, true)
+//      }
+//        catch {
+//        case e: Throwable =>
+//          println("ERROR: Json from kakfa is broken\n" + e.toString)
+//          println(record)
+//          null
+//      }
+//    }
 
     // we only need the value of lines since the key is NULL as defined by KafkaDirectStream
-    val connectDataJson = lines.repartition(numRepartition.toInt).map(_._2).filter(headerMatch(_,"ConnectData")).map(record => {
-      getJson(record, 1)
-    })
-    val mobileDataJson = lines.repartition(numRepartition.toInt).map(_._2).filter(headerMatch(_,"Data")).map(record => {
-      getJson(record, 2)
-    })
-    val andCrashDataJson = lines.repartition(numRepartition.toInt).map(_._2).filter(headerMatch(_,"AndroidCrashData")).map(record => {
-      getJson(record, 3)
+    val connectDataJson = lines.map(record => {
+      record.toString()
     })
 
     // FIXME all printout here will happen in Driver which is useless!
@@ -80,12 +66,6 @@ object MobileOriginalKafkaConsumer {
 
     connectDataJson.foreachRDD(rdd => {
       saveToParquet(rdd, "mi-originallog-connectdata-pr")
-    })
-    mobileDataJson.foreachRDD(rdd => {
-      saveToParquet(rdd, "mi-originallog-mobiledata-prq")
-    })
-    andCrashDataJson.foreachRDD(rdd => {
-      saveToParquet(rdd, "mi-originallog-androidcrash-prq")
     })
 
     def saveToParquet(rdd: RDD[String], dataType: String): Unit = {
