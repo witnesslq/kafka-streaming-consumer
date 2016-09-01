@@ -13,7 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spark.version>1.6.0</spark.version>
         <kafka.version>0.8.2.1</kafka.version>
-        <!--<phoenix.version>4.4.0-HBase-1.0</phoenix.version>-->
+        <phoenix.version>4.4.0-HBase-1.0</phoenix.version>
     </properties>
 
     <dependencies>
@@ -33,6 +33,13 @@
             <artifactId>spark-streaming-kafka_2.10</artifactId>
             <version>${spark.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.phoenix</groupId>
+            <artifactId>phoenix-spark</artifactId>
+            <version>${phoenix.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
@@ -49,6 +56,13 @@
             <artifactId>kafka_2.9.2</artifactId>
             <version>${kafka.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.blueocn.das</groupId>
+            <artifactId>das-kafka-data-unwrap</artifactId>
+            <version>2.5.1</version>
+            <systemPath>${project.basedir}/lib/das-kafka-data-unwrap-2.5.1-SNAPSHOT.jar</systemPath>
+            <scope>system</scope>
         </dependency>
     </dependencies>
 

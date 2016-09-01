@@ -71,8 +71,16 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>com.blueocn.das</groupId>
+      <artifactId>das-kafka-data-unwrap</artifactId>
+      <version>2.5.1</version>
+      <scope>system</scope>
+      <systemPath>/Users/yinmuyang/git/fittime/kafka-streaming-consumer/lib/das-kafka-data-unwrap-2.5.1-SNAPSHOT.jar</systemPath>
+    </dependency>
   </dependencies>
   <properties>
+    <phoenix.version>4.4.0-HBase-1.0</phoenix.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <spark.version>1.6.0</spark.version>
     <kafka.version>0.8.2.1</kafka.version>
