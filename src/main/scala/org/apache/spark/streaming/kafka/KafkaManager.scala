@@ -3,11 +3,11 @@ package org.apache.spark.streaming.kafka
 import kafka.common.TopicAndPartition
 import kafka.message.MessageAndMetadata
 import kafka.serializer.Decoder
-import org.apache.spark.SparkException
+import org.apache.spark.{Logging, SparkException}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.InputDStream
-import org.apache.spark.streaming.kafka.KafkaCluster.{LeaderOffset, Err}
+import org.apache.spark.streaming.kafka.KafkaCluster.{Err, LeaderOffset}
 
 import scala.reflect.ClassTag
 
@@ -15,7 +15,7 @@ import scala.reflect.ClassTag
  * spark使用高级api读取kafka中的数据后，更新offset到zk，用以monitor监控
  * Created by YMY on 15-10-23.
  */
-class KafkaManager (val kafkaParams: Map[String, String]) {
+class KafkaManager (val kafkaParams: Map[String, String]) extends Logging {
 
   private val kc = new KafkaCluster(kafkaParams)
 
@@ -35,10 +35,9 @@ class KafkaManager (val kafkaParams: Map[String, String]) {
     // 在zookeeper上读取offsets前先根据实际情况更新offsets
     setOrUpdateOffsets(topics, groupId)
 
-    //从zookeeper上读取offset开始消费message
-    // 代码块
+    //代码块 从zookeeper上读取offset开始消费message inputStream
     val messages = {
-      // 根据topics获得每个topic对应的kafka partition键值对
+      // 根据topics获得每个topic对应的kafka partition键值对和partition的编号 从0开始
       val partitionsE = kc.getPartitions(topics)
 
       if (partitionsE.isLeft)
@@ -46,7 +45,8 @@ class KafkaManager (val kafkaParams: Map[String, String]) {
       val partitions = partitionsE.right.get
       // 获得topic的partition的offset值
       val consumerOffsetsE = kc.getConsumerOffsets(groupId, partitions)
-      if (consumerOffsetsE.isLeft) throw new SparkException("get kafka consumer offsets failed:")
+      if (consumerOffsetsE.isLeft)
+        throw new SparkException("get kafka consumer offsets failed:")
       val consumerOffsets = consumerOffsetsE.right.get
       KafkaUtils.createDirectStream[K, V, KD, VD, (K, V)](
         ssc, kafkaParams, consumerOffsets, (mmd: MessageAndMetadata[K, V]) => (mmd.key, mmd.message))
@@ -63,11 +63,14 @@ class KafkaManager (val kafkaParams: Map[String, String]) {
     topics.foreach(topic => {
       var hasConsumed = true
       val partitionsE = kc.getPartitions(Set(topic))
-      if (partitionsE.isLeft) throw new SparkException("get kafka partition failed:")
+      if (partitionsE.isLeft)
+        throw new SparkException("get kafka partition failed:")
       val partitions = partitionsE.right.get
+      // 根据groupid获得partitions的offset
       val consumerOffsetsE = kc.getConsumerOffsets(groupId, partitions)
-      if (consumerOffsetsE.isLeft) hasConsumed = false
-      if (hasConsumed) {// 消费过
+      if (consumerOffsetsE.isLeft)
+        hasConsumed = false
+      if (hasConsumed) {// 此groupid之前消费过
         /**
          * 如果zk上保存的offsets已经过时了，即kafka的定时清理策略已经将包含该offsets的文件删除。
          * 针对这种情况，只要判断一下zk上的consumerOffsets和earliestLeaderOffsets的大小，
@@ -90,12 +93,15 @@ class KafkaManager (val kafkaParams: Map[String, String]) {
         if (!offsets.isEmpty) {
           kc.setConsumerOffsets(groupId, offsets)
         }
-      } else {// 没有消费过
+      } else {// 没有消费过 新建立groupid
         val reset = kafkaParams.get("auto.offset.reset").map(_.toLowerCase)
         var leaderOffsets: Map[TopicAndPartition, LeaderOffset] = null
+        // 当groupid对应的offset为空时:largest为topic的最新消息开始,smallest为从0开始
         if (reset == Some("smallest")) {
+          // 最早的offset
           leaderOffsets = kc.getEarliestLeaderOffsets(partitions).right.get
         } else {
+          // 最近的offset
           leaderOffsets = kc.getLatestLeaderOffsets(partitions).right.get
         }
         val offsets = leaderOffsets.map {

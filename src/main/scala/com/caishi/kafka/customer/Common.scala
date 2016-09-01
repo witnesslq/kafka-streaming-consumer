@@ -44,12 +44,12 @@ object Common {
       "metadata.broker.list" -> brokers,
       "serializer.class" -> "kafka.serializer.StringEncoder",
       "group.id" -> groupId,
-      "auto.offset.reset" -> autooffset
+      "auto.offset.reset" -> autooffset // 当groupid对应的offset为空时:largest为topic的最新消息开始,smallest为从0开始
     )
 
     // Since Spark 1.3 we can use Direct Stream
     val topicsSet = topics.split(",").toSet
-    //    val tm = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, topicsSet)
+//        val tm = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, topicsSet)
     val km = new KafkaManager(kafkaParams)
     val data = km.createDirectStream[String, String, StringDecoder, StringDecoder](ssc,kafkaParams,topicsSet)
     // json to K/V
