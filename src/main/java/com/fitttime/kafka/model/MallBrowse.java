@@ -15,6 +15,7 @@ public class MallBrowse {
     private String referer;
     private String pageType;
     private String timestamp;
+    private String click;
 
     public String getTopic() {
         return topic;
@@ -88,6 +89,14 @@ public class MallBrowse {
         this.timestamp = timestamp;
     }
 
+    public String getClick() {
+        return click;
+    }
+
+    public void setClick(String click) {
+        this.click = click;
+    }
+
     @Override
     public String toString() {
         return "MallBrowse{" +
@@ -100,6 +109,7 @@ public class MallBrowse {
                 ", referer='" + referer + '\'' +
                 ", pageType='" + pageType + '\'' +
                 ", timestamp='" + timestamp + '\'' +
+                ", click='" + click + '\'' +
                 '}';
     }
 }

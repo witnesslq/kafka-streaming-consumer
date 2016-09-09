@@ -114,7 +114,7 @@ object Common {
     if(df.count() > 0){
       val dirname = dirName.getDirName(pathPre,dataType)
       try {
-        df.write.format("parquet").mode(SaveMode.Append).save(dirname)
+        df.write.format("parquet").option("mergeSchema", "true").mode(SaveMode.Append).save(dirname)
       }catch {
         case e: Throwable =>
           println("ERROR: Save to parquet error\n" + e.toString + "\n" + rdd.collect())
