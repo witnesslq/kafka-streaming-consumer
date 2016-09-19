@@ -10,6 +10,7 @@ public class UserBrowse {
     private String appVersion;
     private String appType;
     private String createTime;
+    private String from; // 从哪个datatype中点击
     private String data;
     private String dataId;
     private String dataType;
@@ -133,6 +134,14 @@ public class UserBrowse {
         this.duration = duration;
     }
 
+    public String getFrom() {
+        return from;
+    }
+
+    public void setFrom(String from) {
+        this.from = from;
+    }
+
     @Override
     public String toString() {
         return "UserBrowse{" +
@@ -140,6 +149,7 @@ public class UserBrowse {
                 ", appVersion='" + appVersion + '\'' +
                 ", appType='" + appType + '\'' +
                 ", createTime='" + createTime + '\'' +
+                ", from='" + from + '\'' +
                 ", data='" + data + '\'' +
                 ", dataId='" + dataId + '\'' +
                 ", dataType='" + dataType + '\'' +
