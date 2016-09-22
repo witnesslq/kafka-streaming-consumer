@@ -63,6 +63,7 @@ object Common {
     lines.filter(checkDataType2(_,"topic-user-media")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-media",pathPre))
     lines.filter(checkDataType2(_,"topic-user-course-option")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-course-option",pathPre))
     lines.filter(checkDataType2(_,"topic-user-search")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-search",pathPre))
+    lines.filter(checkDataType2(_,"topic-user-mealplan-checkin")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-mealplan-checkin",pathPre)) lines.filter(checkDataType2(_,"topic-user-mealplan")).foreachRDD(rdd => saveToParquet(rdd,"topic-user-mealplan",pathPre))
 
     lines.filter(checkDataType2(_,"topic-mall-order")).map(Util.convertToJson(_,1)).foreachRDD(rdd => saveToParquet(rdd,"topic-mall-order",pathPre))
     lines.filter(checkDataType2(_,"topic-mall-pay")).map(Util.convertToJson(_,2)).foreachRDD(rdd => saveToParquet(rdd,"topic-mall-pay",pathPre))
