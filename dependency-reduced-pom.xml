@@ -74,7 +74,7 @@
   </dependencies>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <spark.version>1.6.0</spark.version>
+    <spark.version>1.6.2</spark.version>
     <kafka.version>0.8.2.1</kafka.version>
   </properties>
 </project>

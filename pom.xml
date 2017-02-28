@@ -11,7 +11,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spark.version>1.6.0</spark.version>
+        <spark.version>1.6.2</spark.version>
         <kafka.version>0.8.2.1</kafka.version>
         <!--<phoenix.version>4.4.0-HBase-1.0</phoenix.version>-->
     </properties>
@@ -33,6 +33,12 @@
             <artifactId>spark-streaming-kafka_2.10</artifactId>
             <version>${spark.version}</version>
         </dependency>
+
+        <!--<dependency>-->
+            <!--<groupId>org.apache.spark</groupId>-->
+            <!--<artifactId>spark-streaming-kafka-0-8_2.11</artifactId>-->
+            <!--<version>${spark.version}</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
