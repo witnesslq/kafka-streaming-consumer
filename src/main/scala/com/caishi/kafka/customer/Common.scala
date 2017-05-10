@@ -118,24 +118,6 @@ object Common {
         isType
     }
 
-//  def saveToParquet2(rdd: RDD[(String,Iterable[String])]): Unit = {
-//    val sqlContext = SQLContextSingleton.getInstance(rdd.sparkContext)
-//    sqlContext.setConf("parquet.enable.summary-metadata", "false")
-//
-//    // Loads an `JavaRDD[String]` storing JSON objects (one object per record)
-//    val df = sqlContext.read.json(rdd.map(it => it._2))
-//    if(df.count() > 0){
-//      val dirname = dirName.getDirName(pathPre,dataType)
-//      try {
-//        df.write.format("parquet").mode(SaveMode.Append).save(dirname)
-//      }catch {
-//        case e: Throwable =>
-//          println("ERROR: Save to parquet error\n" + e.toString + "\n" + rdd.collect())
-//      }
-//    }
-//  }
-
-
     def saveToParquet2(rdd: RDD[String], dataType: String,pathPre : String): Unit = {
         val sqlContext = SQLContextSingleton.getInstance(rdd.sparkContext)
         sqlContext.setConf("parquet.enable.summary-metadata", "false")

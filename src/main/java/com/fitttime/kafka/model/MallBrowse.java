@@ -16,6 +16,8 @@ public class MallBrowse {
     private String pageType;
     private String timestamp;
     private String click;
+    private String ftsource;
+
 
     public String getTopic() {
         return topic;
@@ -97,6 +99,14 @@ public class MallBrowse {
         this.click = click;
     }
 
+    public String getFtsource() {
+        return ftsource;
+    }
+
+    public void setFtsource(String ftsource) {
+        this.ftsource = ftsource;
+    }
+
     @Override
     public String toString() {
         return "MallBrowse{" +
@@ -110,6 +120,7 @@ public class MallBrowse {
                 ", pageType='" + pageType + '\'' +
                 ", timestamp='" + timestamp + '\'' +
                 ", click='" + click + '\'' +
+                ", ftsource='" + ftsource + '\'' +
                 '}';
     }
 }
